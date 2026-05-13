@@ -1,90 +1,128 @@
+// ZADÁNÍ: Komponenta pro editaci existujících událostí s podporou SQL UPDATE a DELETE
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { sql } from "../db.js";
 
-export default function DetailUdalosti() {
+export default function EditaceUdalosti() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [udalost, setUdalost] = useState(null);
+  const [form, setForm] = useState({
+    název: "",
+    datum: "",
+    zkratka_předmětu: "",
+    popis: "",
+    je_test: 0,
+  });
+  const [predmety, setPredmety] = useState([]);
 
+  // ZADÁNÍ: Načtení stávajících dat události podle ID a seznamu předmětů pro výběr
   useEffect(() => {
-    const nactiDetail = async () => {
-      const dotaz = `
-        SELECT e.*, s.název as predmet_nazev 
-        FROM pzop_event e
-        LEFT JOIN pzop_subject s ON e.zkratka_předmětu = s.zkratka
-        WHERE e.id = ${id}
-      `;
-      const data = await sql(dotaz);
-      if (data && data.length > 0) {
-        setUdalost(data[0]);
-      }
+    const nactiData = async () => {
+      const uData = await sql(`SELECT * FROM pzop_event WHERE id = ${id}`);
+      if (uData && uData[0]) setForm(uData[0]);
+
+      const pData = await sql("SELECT zkratka FROM pzop_subject");
+      if (pData) setPredmety(pData);
     };
-    nactiDetail();
+    nactiData();
   }, [id]);
 
-  const smazatUdalost = async () => {
-    if (confirm("Opravdu chceš tuto událost smazat?")) {
+  // ZADÁNÍ: Uložení upravených dat do databáze pomocí příkazu UPDATE
+  const ulozitZmeny = async (e) => {
+    e.preventDefault();
+    await sql(`
+      UPDATE pzop_event SET 
+      název = '${form.název}', datum = '${form.datum}', 
+      zkratka_předmětu = '${form.zkratka_předmětu}', popis = '${form.popis}', 
+      je_test = ${form.je_test} 
+      WHERE id = ${id}
+    `);
+    navigate("/");
+  };
+
+  // ZADÁNÍ: Odstranění události z databáze po potvrzení uživatelem
+  const smazat = async () => {
+    if (confirm("Smazat událost?")) {
       await sql(`DELETE FROM pzop_event WHERE id = ${id}`);
       navigate("/");
     }
   };
 
-  if (!udalost) {
-    return (
-      <div className="min-h-screen flex items-center justify-center font-bold text-gray-400">
-        Načítám detaily události...
-      </div>
-    );
-  }
-
   return (
-    /* flex items-center justify-center zajistí vycentrování na střed */
-    <div className="min-h-[80vh] w-full flex items-center justify-center p-4">
-      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-        {/* Barevný proužek nahoře podle typu (test/úkol) */}
-        <div
-          className={`h-2 ${udalost.je_test == 1 ? "bg-red-500" : "bg-blue-500"}`}
-        />
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <form
+        onSubmit={ulozitZmeny}
+        className="w-full max-w-xl bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+        <h1 className="text-2xl font-black mb-8 text-center">
+          Upravit událost
+        </h1>
 
-        <div className="p-8">
-          <div className="flex justify-between items-center mb-6">
-            <span className="px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-[10px] font-black uppercase tracking-widest">
-              {udalost.zkratka_předmětu} — {udalost.predmet_nazev}
-            </span>
-            <time className="text-sm font-bold text-gray-300">
-              {udalost.datum}
-            </time>
-          </div>
+        <div className="space-y-4">
+          <input
+            className="w-full p-4 bg-gray-50 rounded-xl border"
+            value={form.název}
+            onChange={(e) => setForm({ ...form, název: e.target.value })}
+            placeholder="Název"
+            required
+          />
+          <input
+            type="date"
+            className="w-full p-4 bg-gray-50 rounded-xl border"
+            value={form.datum}
+            onChange={(e) => setForm({ ...form, datum: e.target.value })}
+            required
+          />
 
-          <h1 className="text-3xl font-black text-gray-900 mb-6 leading-tight">
-            {udalost.název}
-          </h1>
+          <select
+            className="w-full p-4 bg-gray-50 rounded-xl border"
+            value={form.zkratka_předmětu}
+            onChange={(e) =>
+              setForm({ ...form, zkratka_předmětu: e.target.value })
+            }>
+            {predmety.map((p) => (
+              <option
+                key={p.zkratka}
+                value={p.zkratka}>
+                {p.zkratka}
+              </option>
+            ))}
+          </select>
 
-          <div className="bg-gray-50/50 rounded-2xl p-6 mb-10 border border-gray-100">
-            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
-              Popis události
-            </h2>
-            <p className="text-gray-600 leading-relaxed font-medium">
-              {udalost.popis || "Tato událost nemá žádný detailní popis."}
-            </p>
-          </div>
+          <textarea
+            className="w-full p-4 bg-gray-50 rounded-xl border h-32"
+            value={form.popis}
+            onChange={(e) => setForm({ ...form, popis: e.target.value })}
+            placeholder="Popis"
+          />
 
-          <div className="flex gap-4">
-            <Link
-              to="/"
-              className="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-2xl text-center transition-all shadow-xl shadow-gray-200 active:scale-[0.98]">
-              Zpět na přehled
-            </Link>
-
-            <button
-              onClick={smazatUdalost}
-              className="px-8 bg-red-50 text-red-500 font-bold rounded-2xl hover:bg-red-500 hover:text-white transition-all active:scale-95 border border-red-100">
-              Smazat
-            </button>
-          </div>
+          {/* ZADÁNÍ: Přepínač pro vizuální odlišení testu v seznamu */}
+          <label className="flex items-center gap-3 p-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.je_test == 1}
+              onChange={(e) =>
+                setForm({ ...form, je_test: e.target.checked ? 1 : 0 })
+              }
+              className="w-5 h-5"
+            />
+            <span className="font-bold text-gray-600">Označit jako test</span>
+          </label>
         </div>
-      </div>
+
+        <div className="flex gap-4 mt-10">
+          <button
+            type="submit"
+            className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">
+            Uložit změny
+          </button>
+          <button
+            type="button"
+            onClick={smazat}
+            className="px-8 bg-red-50 text-red-500 font-bold rounded-2xl hover:bg-red-500 hover:text-white transition-all border border-red-100">
+            Smazat
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

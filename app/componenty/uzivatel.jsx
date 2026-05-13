@@ -1,3 +1,4 @@
+// ZADÁNÍ: Zobrazení profilu přihlášeného uživatele (jméno a avatar) v záhlaví aplikace
 export default function Uzivatel() {
   return (
     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">

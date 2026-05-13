@@ -1,3 +1,4 @@
+// ZADÁNÍ: Správa stavu formuláře, načítání zkratek předmětů z DB a uložení nové události (INSERT)
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
 import { sql } from "../db";
@@ -13,6 +14,7 @@ export default function NovaUdalost() {
     test: 0,
   });
 
+  // ZADÁNÍ: Načtení seznamu předmětů pro výběrové pole (select)
   useEffect(() => {
     const nacti = async () => {
       const data = await sql("SELECT zkratka FROM pzop_subject");
@@ -21,6 +23,7 @@ export default function NovaUdalost() {
     nacti();
   }, []);
 
+  // ZADÁNÍ: Odeslání dat do databáze a přesměrování na hlavní přehled
   const odeslat = async (e) => {
     e.preventDefault();
     const dotaz = `INSERT INTO pzop_event (název, popis, datum, zkratka_předmětu, je_test) 
@@ -46,6 +49,7 @@ export default function NovaUdalost() {
           </Link>
         </div>
 
+        {/* ZADÁNÍ: Responzivní formulář s validací a výběrem předmětu */}
         <form
           onSubmit={odeslat}
           className="flex flex-col gap-5">
@@ -104,6 +108,7 @@ export default function NovaUdalost() {
             </div>
           </div>
 
+          {/* ZADÁNÍ: Volitelné označení události jako test (ovlivňuje barvu karty) */}
           <label className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl cursor-pointer hover:bg-red-50 transition-colors group">
             <input
               type="checkbox"

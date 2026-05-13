@@ -1,68 +1,45 @@
+// ZADÁNÍ: Komponenta pro zobrazení karty události s vektorovou ikonou, datem a vizuálním odlišením testů
 import { Link } from "react-router";
 
 export default function Udalost({ data }) {
-  const ziskejStylPredmetu = (zkratka) => {
-    const barvy = {
-      WAP: "bg-blue-100 text-blue-700",
-      MAT: "bg-red-100 text-red-700",
-      CJL: "bg-yellow-100 text-yellow-700",
-      EKA: "bg-green-100 text-green-700",
-      MUL: "bg-purple-100 text-purple-700",
-      ANG: "bg-orange-100 text-orange-700",
-    };
-    return barvy[zkratka?.toUpperCase()] || "bg-gray-100 text-gray-600";
-  };
-
-  const stylKolecka = ziskejStylPredmetu(data.subject_short);
-
   return (
     <Link
       to={`/events/${data.id}`}
-      className="block transition-transform hover:scale-[1.01]">
-      <article className="relative p-5 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6 overflow-hidden min-h-[90px]">
-        {/* ČERVENÝ PROUŽEK PRO TESTY */}
-        {(data.is_test == 1 || data.je_test == 1) && (
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 shadow-[2px_0_10px_rgba(239,68,68,0.2)]" />
-        )}
+      className="group flex items-center bg-white rounded-3xl p-6 shadow-sm border border-gray-50 hover:shadow-xl hover:scale-[1.02] transition-all relative overflow-hidden mb-4">
+      {/* ZADÁNÍ: Červený postranní pruh indikující důležitý test (is_test == 1) */}
+      {data.is_test == 1 && (
+        <div className="absolute left-0 top-0 bottom-0 w-2 bg-red-500" />
+      )}
 
-        <div className="flex flex-col items-center justify-center min-w-[70px]">
-          <div
-            className={`w-14 h-14 rounded-full flex items-center justify-center font-black text-lg ${stylKolecka}`}>
-            {data.subject_short?.toUpperCase()}
-          </div>
+      <div className="flex flex-col items-center justify-center min-w-[100px] border-r border-gray-100 mr-6">
+        {/* ZADÁNÍ: Formátování data z DB do podoby DD. MM. */}
+        <span className="text-gray-300 font-black text-xs mb-1">
+          {data.date
+            ? data.date.split("-").reverse().slice(0, 2).join(". ")
+            : "??.??"}
+        </span>
+
+        {/* ZADÁNÍ: Vykreslení vektorové Google ikony uložené v databázi u daného předmětu */}
+        <div className="h-10 flex items-center justify-center my-1">
+          <span className="material-symbols-outlined text-3xl text-slate-600">
+            {data.ikona}
+          </span>
         </div>
 
-        <div className="flex-1">
-          <div className="flex justify-between items-start mb-1">
-            <h3 className="font-bold text-gray-900 text-xl leading-tight">
-              {data.title}
-            </h3>
-            <time className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-4">
-              {data.date}
-            </time>
-          </div>
-          <p className="text-sm text-gray-500 line-clamp-2">
-            {data.description}
-          </p>
-        </div>
+        <span className="text-[10px] font-black text-gray-400 uppercase">
+          {data.subject_short}
+        </span>
+      </div>
 
-        <div className="text-gray-200">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={3}>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </div>
-      </article>
+      <div className="flex-1">
+        {/* ZADÁNÍ: Název a stručný popis události s oříznutím textu (line-clamp) */}
+        <h3 className="text-lg font-black text-gray-800 group-hover:text-blue-600 transition-colors leading-tight">
+          {data.title}
+        </h3>
+        <p className="text-sm text-gray-400 font-medium line-clamp-2 mt-1">
+          {data.description}
+        </p>
+      </div>
     </Link>
   );
 }
